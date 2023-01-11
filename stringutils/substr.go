@@ -2,6 +2,10 @@ package stringutils
 
 func OverLapString(a, b string) string {
 
+	if len(a) == 0 || len(b) == 0 {
+		return ""
+	}
+
 	ans := ""
 	count := 0
 	for i := 0; i < len(a); i++ {
