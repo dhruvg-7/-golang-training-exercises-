@@ -74,8 +74,8 @@ func Test_roothandlerPerson(t *testing.T) {
 	if err != nil {
 		t.Errorf("expected error to be nil got %v", err)
 	}
-	if !reflect.DeepEqual("Pong", string(data)) {
-		t.Errorf("expected Pong got %v", string(data))
+	if !reflect.DeepEqual("", string(data)) { // sql recieved data
+		t.Errorf("expected '' got %v", string(data))
 	}
 
 }
