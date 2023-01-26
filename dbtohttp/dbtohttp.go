@@ -2,10 +2,8 @@ package dbtohttp
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"net/http"
-	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -64,17 +62,6 @@ func rootHandler(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprintln(w, p)
 	} else {
 		fmt.Fprintln(w, req.URL.Path[1:])
-	}
-
-}
-func main() {
-
-	err := http.ListenAndServe(":8000", http.HandlerFunc(rootHandler))
-	if errors.Is(err, http.ErrServerClosed) {
-		fmt.Printf("server closed\n")
-	} else if err != nil {
-		fmt.Printf("error starting server: %s\n", err)
-		os.Exit(1)
 	}
 
 }

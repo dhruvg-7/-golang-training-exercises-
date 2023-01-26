@@ -2,6 +2,7 @@ package dbtohttp
 
 import (
 	"database/sql"
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -46,9 +47,35 @@ func Test_readDB(t *testing.T) {
 	}
 }
 
-func Test_personhandler() {
-	testServer := httptest.NewRequest(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func Test_roothandlerPing(t *testing.T) {
 
-	}))
+	req := httptest.NewRequest(http.MethodGet, "/ping", nil)
+	w := httptest.NewRecorder()
+	rootHandler(w, req)
+	res := w.Result()
+	defer res.Body.Close()
+	data, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+	if string("Pong") != string(data) {
+		t.Errorf("expected Pong got %v", string(data))
+	}
+
+}
+func Test_roothandlerPerson(t *testing.T) {
+
+	req := httptest.NewRequest(http.MethodGet, "/person", nil)
+	w := httptest.NewRecorder()
+	rootHandler(w, req)
+	res := w.Result()
+	defer res.Body.Close()
+	data, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		t.Errorf("expected error to be nil got %v", err)
+	}
+	if !reflect.DeepEqual("Pong", string(data)) {
+		t.Errorf("expected Pong got %v", string(data))
+	}
 
 }
