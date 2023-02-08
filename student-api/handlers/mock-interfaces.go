@@ -78,10 +78,10 @@ func (mr *MockdatastoreMockRecorder) Read(arg0 interface{}) *gomock.Call {
 }
 
 // ReadAll mocks base method.
-func (m *Mockdatastore) ReadAll() (models.Student, error) {
+func (m *Mockdatastore) ReadAll() ([]models.Student, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ReadAll")
-	ret0, _ := ret[0].(models.Student)
+	ret0, _ := ret[0].([]models.Student)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

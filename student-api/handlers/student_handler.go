@@ -11,75 +11,80 @@ import (
 	"github.com/student-api/models"
 )
 
-type datastore interface {
-	Insert(models.Student) error
+type studentService interface {
+	InsertService(models.Student) error
 	Update(models.Student) error
-	Delete(int) error
-	Read(int) (models.Student, error)
-	ReadAll() (models.Student, error)
+	Delete(string) error
+	ReadByIdService(int) (models.Student, error)
+	ReadByDetailService(string, string) ([]models.Student, error)
+	ReadAllService() ([]models.Student, error)
+	EnrolStudentSvs(stuId, subId string) error
+}
+type studentServiceHandler struct {
+	s studentService
 }
 
-type handler struct {
-	d datastore
-}
-
-func NewHandler(d datastore) handler {
-	return handler{d}
+func NewStudentServicehandler(s studentService) studentServiceHandler {
+	return studentServiceHandler{s}
 }
 
 //FUNCTION TO INSERT  http
-func (h handler) InsertStudent(w http.ResponseWriter, r *http.Request) {
-	s := models.Student{}
+func (sh studentServiceHandler) InsertStudent(w http.ResponseWriter, r *http.Request) {
+	stu := models.Student{}
 
 	body, _ := ioutil.ReadAll(r.Body)
-	err := json.Unmarshal(body, &s)
+	err := json.Unmarshal(body, &stu)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	err = h.d.Insert(s)
+	// err = h.d.Insert(s)
+	err = sh.s.InsertService(stu)
 	if err != nil {
 		fmt.Fprintf(w, err.Error())
+	} else {
+
+		fmt.Fprintf(w, "Insert Done")
 	}
+
 }
 
 //TODO: FUNCTION TO UPDATE http
-func (h handler) UpdateStudent(w http.ResponseWriter, r *http.Request) {
-	s := models.Student{}
+func (sh studentServiceHandler) UpdateStudent(w http.ResponseWriter, r *http.Request) {
+	st := models.Student{}
 	body, _ := ioutil.ReadAll(r.Body)
 
-	err := json.Unmarshal(body, &s)
+	err := json.Unmarshal(body, &st)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	err = h.d.Update(s)
+	err = sh.s.Update(st)
 	if err != nil {
 		fmt.Fprintf(w, err.Error())
+	} else {
+
+		fmt.Fprintf(w, "Update Sucessful")
 	}
 }
 
 //TODO: FUNCTION TO DELETE http
-func (h handler) DeleteStudent(w http.ResponseWriter, r *http.Request) {
+func (sh studentServiceHandler) DeleteStudent(w http.ResponseWriter, r *http.Request) {
 
 	params := mux.Vars(r)
 	id := params["id"]
-	rollno, err := strconv.Atoi(string(id))
+	err := sh.s.Delete(id)
 	if err != nil {
-		println(err.Error())
-	}
+		fmt.Fprintf(w, err.Error())
+	} else {
 
-	err = h.d.Delete(rollno)
-	if err != nil {
-		println(err.Error())
-
+		fmt.Fprintf(w, "Delete Sucessfull")
 	}
-	fmt.Fprintf(w, err.Error())
 }
 
 //TODO: FUNCTION TO READ http
-func (h handler) GetStudent(w http.ResponseWriter, r *http.Request) {
+func (sh studentServiceHandler) GetStudent(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id := params["id"]
 	rollno, err := strconv.Atoi(string(id))
@@ -87,19 +92,46 @@ func (h handler) GetStudent(w http.ResponseWriter, r *http.Request) {
 		println(err.Error())
 	}
 
-	ans, err := h.d.Read(rollno)
+	ans, err := sh.s.ReadByIdService(rollno)
+
 	if err != nil {
 		println(err.Error())
 	}
 	fmt.Fprintf(w, "%v", ans)
 }
 
-func (h handler) GetAllStudent(w http.ResponseWriter, r *http.Request) {
+func (sh studentServiceHandler) GetAllStudent(w http.ResponseWriter, r *http.Request) {
 
-	ans, err := h.d.ReadAll()
+	ans, err := sh.s.ReadAllService()
 	if err != nil {
 		fmt.Fprintf(w, fmt.Sprintf("read error reason: %s", err))
 		return
 	}
 	fmt.Fprintf(w, "%v", ans)
+}
+
+func (sh studentServiceHandler) GetStudentByDetail(w http.ResponseWriter, r *http.Request) {
+
+	id := r.URL.Query().Get("id")
+	name := r.URL.Query().Get("name")
+	fmt.Printf(id)
+	ans, err := sh.s.ReadByDetailService(id, name)
+
+	if err != nil {
+		fmt.Fprintf(w, err.Error())
+	}
+	fmt.Fprintf(w, "%v", ans)
+
+}
+func (sh studentServiceHandler) EnrolStudentHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+
+	stuId := params["stuId"]
+	subId := params["subId"]
+	err := sh.s.EnrolStudentSvs(stuId, subId)
+	if err != nil {
+		fmt.Fprintf(w, "%v", err.Error())
+	} else {
+		fmt.Fprintf(w, "Enroled Student %s to Subject %s", stuId, subId)
+	}
 }
