@@ -1,192 +1,346 @@
 package stores
 
 import (
+	"database/sql"
 	"errors"
 	"reflect"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	_ "github.com/go-sql-driver/mysql"
-
-	models "github.com/student-api/models"
+	"github.com/student-api/models"
+	"github.com/student-api/myerrors"
 )
 
-func TestGetAll(t *testing.T) {
+func Test_storeCon_Insert(t *testing.T) {
+	type fields struct {
+		db *sql.DB
+	}
+	type args struct {
+		s models.Student
+	}
+	st := models.Student{
+		RollNo: 2,
+		Name:   "testStudent",
+		Age:    99,
+	}
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Errorf(err.Error())
+	}
 	tests := []struct {
 		name     string
-		want     []models.Student
-		mockCall func(mock sqlmock.Sqlmock)
-		wantErr  error
+		fields   fields
+		args     args
+		wantErr  bool
+		myerr    string
+		err      error
+		mockcall *sqlmock.ExpectedExec
 	}{
-		{name: "Successfull get request", want: []models.Student{
-			{Name: "Amit", Age: 21, RollNo: 7},
-			{Name: "Ankit", Age: 22, RollNo: 9},
+		{
+			name:     "InsertStudentBaseCase",
+			fields:   fields{db},
+			args:     args{st},
+			wantErr:  false,
+			mockcall: mock.ExpectExec(`INSERT INTO`).WithArgs(st.RollNo, st.Name, st.Age).WillReturnResult(sqlmock.NewResult(1, 1)),
 		},
-			mockCall: func(mock sqlmock.Sqlmock) {
-				rs := sqlmock.NewRows([]string{"name", "age", "rollNo"}).AddRow("Amit", 21, 7).AddRow("Ankit", 22, 9)
-				mock.ExpectQuery("SELECT *").WillReturnRows(rs)
-			},
-		},
-		{name: "Mismatched query found", want: []models.Student{}, wantErr: errors.New("Mismatched query found"),
-			mockCall: func(mock sqlmock.Sqlmock) {
-				mock.ExpectQuery("SELECT *").WillReturnError(errors.New("Mismatched query found"))
-			},
-		},
-		{name: "Multiple parameters found", want: nil,
-			wantErr: errors.New("Multiple arguments found"),
-
-			mockCall: func(mock sqlmock.Sqlmock) {
-				rs := sqlmock.NewRows([]string{"name", "age", "rollNo", "phn"}).AddRow("Amit", 21, 7, "26531723576")
-				mock.ExpectQuery("SELECT *").WillReturnRows(rs)
-			},
+		{
+			name:     "InsertStudentErrorCase",
+			fields:   fields{db},
+			args:     args{st},
+			wantErr:  true,
+			myerr:    "sql_i",
+			err:      errors.New(myerrors.NewError("sql_i")),
+			mockcall: mock.ExpectExec(`INSERT INTO`).WithArgs(st.RollNo, st.Name, st.Age).WillReturnError(errors.New(myerrors.NewError("sql_i"))),
 		},
 	}
-
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			db, mock, _ := sqlmock.New()
-			defer db.Close()
-			sql_db := sqldb{db}
-
-			tt.mockCall(mock)
-			got, err := sql_db.ReadAll()
-			if (tt.wantErr != nil) && tt.wantErr == err {
-				t.Errorf("Expected %s , got %s", tt.wantErr.Error(), err.Error())
+			db := storeCon{
+				db: tt.fields.db,
 			}
-			if (tt.wantErr == nil) && !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Sqldb.GetAll() = %v, want %v", got, tt.want)
+			if err := db.Insert(tt.args.s); (err != nil) != tt.wantErr {
+				t.Errorf("storeCon.Insert() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
-
 }
 
-func TestRead(t *testing.T) {
+func Test_storeCon_Update(t *testing.T) {
+	type fields struct {
+		db *sql.DB
+	}
+	type args struct {
+		s models.Student
+	}
+	st := models.Student{
+		RollNo: 2,
+		Name:   "testStudent",
+		Age:    99,
+	}
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Errorf(err.Error())
+	}
 	tests := []struct {
 		name     string
-		rollNo   int
-		want     models.Student
-		wantErr  error
-		mockCall func(mock sqlmock.Sqlmock)
+		fields   fields
+		args     args
+		wantErr  bool
+		myerr    string
+		err      error
+		mockcall *sqlmock.ExpectedExec
 	}{
-		{name: "Get record", rollNo: 8, want: models.Student{Name: "Ankit", Age: 22, RollNo: 8}, mockCall: func(mock sqlmock.Sqlmock) {
-			rs := sqlmock.NewRows([]string{"name", "age", "rollNo"}).AddRow("Ankit", 22, 8)
-			mock.ExpectQuery("SELECT *").WillReturnRows(rs)
-		}},
-		{name: "Multiple parameters found", rollNo: 8, want: models.Student{Name: "Ankit", Age: 22, RollNo: 8}, mockCall: func(mock sqlmock.Sqlmock) {
-			rs := sqlmock.NewRows([]string{"name", "age", "rollNo", "phn"}).AddRow("Ankit", 22, 8, "27638721")
-			mock.ExpectQuery("SELECT *").WillReturnRows(rs).WillReturnError(errors.New("Multiple parameters found"))
-		}, wantErr: errors.New("Multiple parameters found")},
+		{
+			name:     "InsertStudentBaseCase",
+			fields:   fields{db},
+			args:     args{st},
+			wantErr:  false,
+			mockcall: mock.ExpectExec(`UPDATE`).WithArgs(st.Name, st.Age, st.RollNo).WillReturnResult(sqlmock.NewResult(1, 1)),
+		},
+		{
+			name:     "InsertStudentErrorCase",
+			fields:   fields{db},
+			args:     args{st},
+			wantErr:  true,
+			myerr:    "sql_u",
+			err:      errors.New(myerrors.NewError("sql_u")),
+			mockcall: mock.ExpectExec(`UPDATE`).WithArgs(st.Name, st.Age, st.RollNo).WillReturnError(errors.New(myerrors.NewError("sql_u"))),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			db, mock, _ := sqlmock.New()
-			sql_db := sqldb{db}
-			tt.mockCall(mock)
-			got, err := sql_db.Read(tt.rollNo)
-			if (err != nil) && err.Error() != tt.wantErr.Error() {
-				t.Errorf("Sqldb.Get() error = %v, wantErr %v", err, tt.wantErr)
+			db := storeCon{
+				db: tt.fields.db,
+			}
+			if err := db.Update(tt.args.s); (err != nil) != tt.wantErr {
+				t.Errorf("storeCon.Update() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_storeCon_Delete(t *testing.T) {
+	type fields struct {
+		db *sql.DB
+	}
+	type args struct {
+		rollno int
+	}
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	tests := []struct {
+		name     string
+		fields   fields
+		args     args
+		wantErr  bool
+		myerr    string
+		err      error
+		mockcall *sqlmock.ExpectedExec
+	}{
+		{
+			name:     "DeleteStudentBaseCase",
+			fields:   fields{db},
+			args:     args{5},
+			wantErr:  false,
+			mockcall: mock.ExpectExec(`DELETE`).WithArgs(5).WillReturnResult(sqlmock.NewResult(0, 1)),
+		},
+		{
+			name:     "DeleteStudentErrorCase",
+			fields:   fields{db},
+			args:     args{5},
+			wantErr:  true,
+			myerr:    "sql_d",
+			err:      errors.New(myerrors.NewError("sql_d")),
+			mockcall: mock.ExpectExec(`DELETE`).WithArgs(5).WillReturnError(errors.New(myerrors.NewError("sql_d"))),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db := storeCon{
+				db: tt.fields.db,
+			}
+			if err := db.Delete(tt.args.rollno); (err != nil) != tt.wantErr {
+				t.Errorf("storeCon.Delete() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_storeCon_Read(t *testing.T) {
+	type fields struct {
+		db *sql.DB
+	}
+	type args struct {
+		rollno int
+	}
+	st := models.Student{
+		RollNo: 2,
+		Name:   "testStudent",
+		Age:    99,
+	}
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	tests := []struct {
+		name     string
+		fields   fields
+		args     args
+		wantErr  bool
+		want     models.Student
+		myerr    string
+		err      error
+		mockcall *sqlmock.ExpectedQuery
+	}{
+		{
+			name:     "GetStudentBaseCase",
+			fields:   fields{db},
+			args:     args{5},
+			want:     st,
+			wantErr:  false,
+			mockcall: mock.ExpectQuery(`SELECT`).WithArgs(5).WillReturnRows(mock.NewRows([]string{"RollNo", "Name", "Age"}).AddRow(2, "testStudent", 99)),
+		},
+		{
+			name:     "GetStudentErrorCase",
+			fields:   fields{db},
+			args:     args{5},
+			wantErr:  true,
+			myerr:    "sql_r",
+			err:      errors.New(myerrors.NewError("sql_r")),
+			mockcall: mock.ExpectQuery(`SELECT`).WithArgs(5).WillReturnError(errors.New(myerrors.NewError("sql_r"))),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			db := storeCon{
+				db: tt.fields.db,
+			}
+			got, err := db.Read(tt.args.rollno)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("storeCon.Read() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if (tt.wantErr == nil) && !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Sqldb.Get() = %v, want %v", got, tt.want)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("storeCon.Read() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestDelete(t *testing.T) {
-	tests := []struct {
-		name     string
-		rollNo   int
-		wantErr  error
-		mockCall func(mock sqlmock.Sqlmock)
-	}{
-		{
-			name: "Deletion Successful", rollNo: 8, mockCall: func(mock sqlmock.Sqlmock) {
-				mock.ExpectExec("DELETE FROM").WillReturnResult(sqlmock.NewResult(1, 1))
-			}},
-		{
-			name: "Failed Deletion", wantErr: errors.New("Failed to delete student"), mockCall: func(mock sqlmock.Sqlmock) {
-				mock.ExpectExec("DELETE FROM").WillReturnError(errors.New("Failed to delete student"))
-			}},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			db, mock, _ := sqlmock.New()
-			sqldb := sqldb{db}
-			tt.mockCall(mock)
-			err := sqldb.Delete(tt.rollNo)
-			if (err != nil) && err.Error() != tt.wantErr.Error() {
-				t.Errorf("Sqldb.Delete() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
+func Test_storeCon_ReadByName(t *testing.T) {
 
-func TestInsert(t *testing.T) {
-	tests := []struct {
+	type fields struct {
+		db *sql.DB
+	}
+	type args struct {
 		name string
-		// args     args
-		want     models.Student
-		wantErr  error
-		mockCall func(mock sqlmock.Sqlmock)
+	}
+	st := []models.Student{{
+
+		RollNo: 2,
+		Name:   "testStudent",
+		Age:    99,
+	},
+	}
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	tests := []struct {
+		name     string
+		fields   fields
+		args     args
+		want     []models.Student
+		wantErr  bool
+		mockcall *sqlmock.ExpectedQuery
 	}{
 		{
-			name: "Insertion Successful",
-			want: models.Student{Name: "Ankit", Age: 22, RollNo: 8},
-			// args: args,
-			mockCall: func(mock sqlmock.Sqlmock) {
-				mock.ExpectExec("insert into").WithArgs().WillReturnResult(sqlmock.NewResult(1, 1))
-			}},
+			name:     "GetByNameBaseCase",
+			fields:   fields{db},
+			args:     args{st[0].Name},
+			want:     st,
+			wantErr:  false,
+			mockcall: mock.ExpectQuery("SELECT").WithArgs(st[0].Name).WillReturnRows(mock.NewRows([]string{"RollNo", "Name", "Age"}).AddRow(2, "testStudent", 99)),
+		},
 		{
-			name:    "Insertion Failed",
-			want:    models.Student{Name: "Ankit", Age: 22, RollNo: 8},
-			wantErr: errors.New("Failed to insert student"),
-			mockCall: func(mock sqlmock.Sqlmock) {
-				mock.ExpectExec("insert into").WithArgs().WillReturnError(errors.New("Failed to insert student"))
-			}},
+			name:     "GetByNameErrorCase",
+			fields:   fields{db},
+			args:     args{st[0].Name},
+			want:     []models.Student{},
+			wantErr:  true,
+			mockcall: mock.ExpectQuery("SELECT").WithArgs(st[0].Name).WillReturnRows(mock.NewRows([]string{"RollNo", "Name"}).AddRow(2, "testStudent")).WillReturnError(errors.New(myerrors.NewError("sql_r"))),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			db, mock, _ := sqlmock.New()
-			sqldb := sqldb{db}
-			tt.mockCall(mock)
-			err := sqldb.Insert(tt.want)
-			if (err != nil) && err.Error() != tt.wantErr.Error() {
-				t.Errorf("Sqldb.Insert() error = %v, wantErr %v", err, tt.wantErr)
+			db := storeCon{
+				db: tt.fields.db,
+			}
+			got, err := db.ReadByName(tt.args.name)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("storeCon.ReadByName() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("storeCon.ReadByName() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-/*
-func TestUpdate(t *testing.T) {
+func Test_storeCon_ReadAll(t *testing.T) {
+	type fields struct {
+		db *sql.DB
+	}
+	st := []models.Student{{
+
+		RollNo: 2,
+		Name:   "testStudent",
+		Age:    99,
+	},
+	}
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		println(err.Error()) //
+	}
 	tests := []struct {
 		name     string
-		want     models.Student
-		wantErr  error
-		mockCall func(mock sqlmock.Sqlmock)
+		fields   fields
+		want     []models.Student
+		wantErr  bool
+		mockcall *sqlmock.ExpectedQuery
 	}{
 		{
-			name: "Updated", want: models.Student{Name: "Ankit", Age: 22, RollNo: 8}, mockCall: func(mock sqlmock.Sqlmock) {
-				mock.ExpectExec("UPDATE studentDetails").WillReturnResult(sqlmock.NewResult(0, 1))
-			}},
+			name:     "ReadAllBaseCase",
+			fields:   fields{db},
+			want:     st,
+			wantErr:  false,
+			mockcall: mock.ExpectQuery("SELECT").WithArgs().WillReturnRows(mock.NewRows([]string{"RollNo", "Name", "Age"}).AddRow(2, "testStudent", 99)),
+		},
 		{
-			name: "Update Failed", want: models.Student{Name: "Ankit", Age: 22, RollNo: 8}, wantErr: errors.New("Updation Failed"), mockCall: func(mock sqlmock.Sqlmock) {
-				mock.ExpectExec("UPDATE studentDetails").WillReturnError(errors.New("Updation Failed"))
-			}},
+			name:     "ReadAllErrorCase",
+			fields:   fields{db},
+			want:     []models.Student{},
+			wantErr:  true,
+			mockcall: mock.ExpectQuery("SELECT").WithArgs().WillReturnRows(mock.NewRows([]string{"RollNo", "Name"}).AddRow(2, "testStudent")).WillReturnError(errors.New(myerrors.NewError("sql_r"))),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			db, mock, _ := sqlmock.New()
-			sqldb := Sqldb{db}
-			tt.mockCall(mock)
-			err := sqldb.Update(tt.want)
-			if (err != nil) && err.Error() != tt.wantErr.Error() {
-				t.Errorf("Sqldb.Delete() error = %v, wantErr %v", err, tt.wantErr)
+			db := storeCon{
+				db: tt.fields.db,
+			}
+			got, err := db.ReadAll()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("storeCon.ReadAll() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("storeCon.ReadAll() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
-*/

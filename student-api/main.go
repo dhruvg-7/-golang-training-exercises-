@@ -31,6 +31,7 @@ func main() {
 	stuSvs := service.NewStudentService(studentCon, subSvs, enrSvs)
 	stuh := handlers.NewStudentServicehandler(stuSvs)
 
+	//student handlers
 	r.HandleFunc("/student", stuh.InsertStudent).Methods("POST")
 	r.HandleFunc("/student", stuh.UpdateStudent).Methods("PUT")
 	r.HandleFunc("/student/{id}", stuh.DeleteStudent).Methods("DELETE")
@@ -44,12 +45,12 @@ func main() {
 	r.HandleFunc("/subject", subh.GetAllSubject).Methods("GET")
 
 	//enrolment handler
-
 	r.HandleFunc("/student/{stuId}/subject/{subId}", stuh.EnrolStudentHandler).Methods("POST")
+	r.HandleFunc("/student/{stuId}/subject", stuh.GetSubjectsByStuSvs).Methods("GET")
 
-	//error handling
 	err = http.ListenAndServe(":8080", r)
 
+	//error handling
 	if errors.Is(err, http.ErrServerClosed) {
 		fmt.Printf("server closed\n")
 	} else if err != nil {

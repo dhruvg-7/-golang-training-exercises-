@@ -19,6 +19,7 @@ type studentService interface {
 	ReadByDetailService(string, string) ([]models.Student, error)
 	ReadAllService() ([]models.Student, error)
 	EnrolStudentSvs(stuId, subId string) error
+	GetstudentBySubSvs(stuId string) ([]models.EnrolmentList, error)
 }
 type studentServiceHandler struct {
 	s studentService
@@ -28,10 +29,9 @@ func NewStudentServicehandler(s studentService) studentServiceHandler {
 	return studentServiceHandler{s}
 }
 
-//FUNCTION TO INSERT  http
+// FUNCTION TO INSERT http
 func (sh studentServiceHandler) InsertStudent(w http.ResponseWriter, r *http.Request) {
 	stu := models.Student{}
-
 	body, _ := ioutil.ReadAll(r.Body)
 	err := json.Unmarshal(body, &stu)
 	if err != nil {
@@ -39,15 +39,12 @@ func (sh studentServiceHandler) InsertStudent(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// err = h.d.Insert(s)
 	err = sh.s.InsertService(stu)
 	if err != nil {
 		fmt.Fprintf(w, err.Error())
 	} else {
-
 		fmt.Fprintf(w, "Insert Done")
 	}
-
 }
 
 //TODO: FUNCTION TO UPDATE http
@@ -97,7 +94,7 @@ func (sh studentServiceHandler) GetStudent(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		println(err.Error())
 	}
-	fmt.Fprintf(w, "%v", ans)
+	json.NewEncoder(w).Encode(ans)
 }
 
 func (sh studentServiceHandler) GetAllStudent(w http.ResponseWriter, r *http.Request) {
@@ -107,7 +104,7 @@ func (sh studentServiceHandler) GetAllStudent(w http.ResponseWriter, r *http.Req
 		fmt.Fprintf(w, fmt.Sprintf("read error reason: %s", err))
 		return
 	}
-	fmt.Fprintf(w, "%v", ans)
+	json.NewEncoder(w).Encode(ans)
 }
 
 func (sh studentServiceHandler) GetStudentByDetail(w http.ResponseWriter, r *http.Request) {
@@ -120,7 +117,7 @@ func (sh studentServiceHandler) GetStudentByDetail(w http.ResponseWriter, r *htt
 	if err != nil {
 		fmt.Fprintf(w, err.Error())
 	}
-	fmt.Fprintf(w, "%v", ans)
+	json.NewEncoder(w).Encode(ans)
 
 }
 func (sh studentServiceHandler) EnrolStudentHandler(w http.ResponseWriter, r *http.Request) {
@@ -130,8 +127,20 @@ func (sh studentServiceHandler) EnrolStudentHandler(w http.ResponseWriter, r *ht
 	subId := params["subId"]
 	err := sh.s.EnrolStudentSvs(stuId, subId)
 	if err != nil {
-		fmt.Fprintf(w, "%v", err.Error())
+		fmt.Fprintf(w, err.Error())
 	} else {
 		fmt.Fprintf(w, "Enroled Student %s to Subject %s", stuId, subId)
 	}
+}
+
+func (sh studentServiceHandler) GetSubjectsByStuSvs(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+
+	stuId := params["stuId"]
+	ans, err := sh.s.GetstudentBySubSvs(stuId)
+	if err != nil {
+		fmt.Fprintf(w, err.Error())
+	}
+	json.NewEncoder(w).Encode(ans)
+
 }

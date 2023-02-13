@@ -1,0 +1,200 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Student-Api crud operation  1.0",
+    "description": "This is Student -Api developed during golang training !",
+    "contact": {
+      "email": "apiteam@swagger.io"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "version": "0.1.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Student-Api",
+      "description": "Operations on student records"
+    }
+  ],
+  "paths": {
+    "/student": {
+      "post": {
+        "tags": [
+          "Student-Api"
+        ],
+        "summary": "Create a student record",
+        "description": "return status code",
+        "operationId": "InsertStudent",
+        "requestBody": {
+          "description": "Insert an record to database",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Student-Api"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Student-Api"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Student-Api"
+        ],
+        "summary": "Update student record for given Rollno",
+        "description": "return status code",
+        "operationId": "UpdateStudent",
+        "requestBody": {
+          "description": "Update an existent student record",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Student-Api"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Student-Api"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/student/all": {
+      "get": {
+        "tags": [
+          "Student-Api"
+        ],
+        "summary": "Returns all student records",
+        "description": "return status code",
+        "operationId": "GetAllStudents",
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Student-Api"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/student/{rollno}": {
+      "get": {
+        "tags": [
+          "Student-Api"
+        ],
+        "summary": "Returns student record for that Rollno",
+        "description": "Returns a string containing record",
+        "operationId": "GetStudent",
+        "parameters": [
+          {
+            "name": "rollno",
+            "in": "path",
+            "description": "ID of student that needs to be fetched",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Student-Api"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Student-Api"
+        ],
+        "summary": "Delete a record of given Rollno",
+        "description": "For provided id maching record will be deleted from the database ",
+        "operationId": "DeleteStudent",
+        "parameters": [
+          {
+            "name": "rollno",
+            "in": "path",
+            "description": "ID of student that needs to be fetched",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Student-Api": {
+        "type": "object",
+        "properties": {
+          "RollNo": {
+            "type": "integer",
+            "format": "int64",
+            "example": 10
+          },
+          "Name": {
+            "type": "string",
+            "format": "string",
+            "example": "Robin"
+          },
+          "Age": {
+            "type": "number",
+            "format": "float",
+            "example": 14
+          }
+        },
+        "xml": {
+          "name": "Student-Api"
+        }
+      }
+    }
+  }
+}

@@ -12,13 +12,13 @@ type storeCon struct {
 }
 
 func NewStoreCon(db *sql.DB) storeCon {
-	return storeCon{db} //
+	return storeCon{db}
 }
 
 //FUNCTION TO INSERT
 func (db storeCon) Insert(s models.Student) error {
 
-	_, err := db.db.Exec(`insert into Student (RollNo,Name,Age) values (?,?,?)`, s.RollNo, s.Name, s.Age)
+	_, err := db.db.Exec(`INSERT INTO Student (RollNo,Name,Age) values (?,?,?)`, s.RollNo, s.Name, s.Age)
 	if err != nil {
 		return err
 	}
