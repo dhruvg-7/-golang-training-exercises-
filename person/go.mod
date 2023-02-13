@@ -1,3 +1,3 @@
-module github.com/golang-training-exercises/person
+module github.com/person
 
 go 1.18
