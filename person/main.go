@@ -1,12 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
-	"github.com/person/filehandling"
-	"github.com/person/message"
-	"github.com/person/models"
+	"github.com/person/processor"
+	"github.com/person/readwrite"
 )
 
 func main() {
@@ -14,16 +14,15 @@ func main() {
 	f, _ := os.Open("person.csv")
 	defer f.Close()
 
-	c := make(chan models.Person)
-	c2 := make(chan string)
-
-	go filehandling.ReadPerson(f, c)
-	go message.Makemsg(c, c2)
+	c := readwrite.ReadPerson(f)
+	c2 := processor.Msgdigest(c)
 	f2, err := os.Create("personEncoded.csv")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer f2.Close()
-	filehandling.WriteString(f2, c2)
-
+	err = readwrite.WriteString(f2, c2)
+	if err != nil {
+		fmt.Printf("Write error Got:%v", err)
+	}
 }
